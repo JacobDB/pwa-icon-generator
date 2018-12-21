@@ -5,7 +5,7 @@ Generates home screen icons and splash screens.
 ## Installation
 
 ```sh
-$ npm install --global github:JacobDB/app-image-generator
+$ npm install --global app-image-generator
 ```
 
 ## Usage
