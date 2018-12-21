@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const Jimp = require("jimp");
 const argv = require("yargs").options({
     "c": {
