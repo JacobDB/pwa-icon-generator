@@ -1,10 +1,10 @@
 {
-  "name": "app-image-generator",
+  "name": "pwa-icon-generator",
   "version": "1.0.0",
   "description": "Generates home screen icons and splash screens.",
   "main": "index.js",
   "bugs": {
-    "url": "https://github.com/JacobDB/app-image-generator/issues",
+    "url": "https://github.com/JacobDB/pwa-icon-generator/issues",
     "email": "jacob@bearce.me"
   },
   "license": "MIT",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JacobDB/app-image-generator.git"
+    "url": "https://github.com/JacobDB/pwa-icon-generator.git"
   },
   "dependencies": {
     "jimp": "^0.6.0",
