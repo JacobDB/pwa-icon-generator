@@ -11,5 +11,5 @@ $ npm install --global pwa-icon-generator
 ## Usage
 
 ```sh
-$ pwa-icon-generator --color 448AFF --icon path/to/icon.png --output path/to/output/
+$ generate-icons --color 448AFF --icon path/to/icon.png --output path/to/output/
 ```
