@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 const Jimp = require("jimp");
-const argv = require("yargs").options({
+
+const options = {
     "c": {
         alias: "color",
         default: "448AFF",
@@ -17,7 +18,15 @@ const argv = require("yargs").options({
         default: "media",
         type: "string",
     },
-}).argv;
+}
+const argv = require("yargs").options(options).argv;
+
+for (const i in options) {
+    if (options[i].default === argv[i]) {
+        console.info(`INFO: Using default value of '${options[i].alias}' (${argv[i]})`);
+    }
+}
+console.log('\n');
 
 const bg_color = Jimp.cssColorToHex(`#${argv.color}`);
 const icon_path = argv.icon;
