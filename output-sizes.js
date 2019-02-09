@@ -218,5 +218,5 @@ for (const x in sizes)
         totalLength += sizes[x][y].length
 
 
-module.exports = sizes;
-module.exports.totalLength = totalLength;
+module.exports.outputSizes = sizes;
+module.exports.totalSizesLenght = totalLength;

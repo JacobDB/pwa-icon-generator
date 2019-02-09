@@ -6,8 +6,10 @@ const fs = require("fs");
 const Jimp = require("jimp");
 const yargs = require("yargs");
 const svgToPng = require("svg-to-png");
+const _cliProgress = require('cli-progress');
 
-const outputSizes = require("./output-sizes");
+const { outputSizes, totalSizesLenght } = require("./output-sizes");
+
 
 const options = {
     "c": {
@@ -33,9 +35,9 @@ for (const i in options) {
         console.info(`INFO: Using default value of '${options[i].alias}' (${argv[i]})`);
     }
 }
-console.log('\n');
 
 const bgColor = Jimp.cssColorToHex(`#${argv.color}`);
+
 new Promise(async (resolve) => {
     // verify if icon are svg
     if (path.extname(argv.icon) === '.svg') {
@@ -46,17 +48,33 @@ new Promise(async (resolve) => {
         // get fullpath of temp file
         const tempIcon = `${iconName}.png`;
 
+        console.warn(`\nWARN: Please don't delete ${tempIcon}. We'll do it for you when we're done.\n`);
+
         // create temp png of svg
         await svgToPng.convert(path.resolve(argv.icon), iconFolder, {
             defaultHeight: 8000,
             defaultWidth: 8000,
         });
 
-        resolve(path.resolve(path.join(iconFolder, tempIcon)));
+        resolve({
+            iconPath: path.resolve(path.join(iconFolder, tempIcon)), 
+            bySVG: true
+        });
     } else {
-        resolve(path.resolve(argv.icon));
+        console.warn(`\nWARN: Please don't delete ${path.basename(argv.icon)}.\n`);
+        resolve({
+            iconPath: path.resolve(argv.icon),
+            bySVG: false
+        });
     }
-}).then((iconPath) => {
+}).then((params, bySVG) => {
+    // create a new progress bar instance and use shades_classic theme
+    const progress = new _cliProgress.Bar({}, _cliProgress.Presets.shades_classic);
+    // start the progress bar with a total value of 'totalSizesLenght' and start value of 0
+    progress.start(totalSizesLenght, 0);
+    let currentProgress = 0;
+
+
     // Generate images
     for (const namePrefix in outputSizes) {
         const currentNamePrefix = outputSizes[namePrefix];
@@ -76,7 +94,7 @@ new Promise(async (resolve) => {
                     backgrounds.push(new Jimp(settings.dimensions[1], settings.dimensions[0], bgColor));
                 }
 
-                Jimp.read(iconPath).then((icon) => {
+                Jimp.read(params.iconPath).then((icon) => {
                     icon.cover(icon_size, icon_size);
 
                     backgrounds.forEach((background) => {
@@ -127,6 +145,21 @@ new Promise(async (resolve) => {
 
                             // write the image
                             background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
+
+                            // update the current value
+                            currentProgress += 1;
+                            progress.update(currentProgress);
+
+                            // verify if is the last item
+                            if (currentProgress === totalSizesLenght) {
+                                // delete temp png of svg
+                                if (params.bySVG) {
+                                    fs.unlinkSync(params.iconPath);
+                                }
+
+                                // stop the progress bar
+                                progress.stop();
+                            }
                         });
                     });
                 });
