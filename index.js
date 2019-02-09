@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 const Jimp = require("jimp");
+const yargs = require("yargs");
+const path = require("path");
 
 const options = {
     "c": {
@@ -10,7 +12,7 @@ const options = {
     },
     "i": {
         alias: "icon",
-        default: `${__dirname}/assets/default-icon.png`,
+        default: "assets/default-icon.png",
         type: "string",
     },
     "o": {
@@ -19,7 +21,7 @@ const options = {
         type: "string",
     },
 }
-const argv = require("yargs").options(options).argv;
+const argv = yargs.options(options).argv;
 
 for (const i in options) {
     if (options[i].default === argv[i]) {
@@ -27,6 +29,11 @@ for (const i in options) {
     }
 }
 console.log('\n');
+
+// resolve paths
+argv.icon = argv.i = path.resolve(argv.icon);
+argv.output = argv.o = path.resolve(argv.output);
+
 
 const bg_color = Jimp.cssColorToHex(`#${argv.color}`);
 const icon_path = argv.icon;
