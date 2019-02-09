@@ -60,7 +60,7 @@ for (const name_prefix in output_sizes) {
             }
 
             Jimp.read(icon_path).then((icon) => {
-                icon.resize(icon_size, Jimp.AUTO);
+                icon.cover(icon_size, icon_size);
 
                 backgrounds.forEach((background) => {
                     // determine where to position the icon for it to appear centered
@@ -77,7 +77,7 @@ for (const name_prefix in output_sizes) {
                         if (settings.mode === "circle") {
                             // read the circle mask
                             Jimp.read(`${__dirname}/assets/circle-mask.png`).then((mask) => {
-                                // reszie the circle mask to match the background
+                                // resize the circle mask to match the background
                                 mask.resize(background.bitmap.width, background.bitmap.height);
 
                                 // apply the circle mask the background
