@@ -3,31 +3,35 @@
 const Jimp = require("jimp");
 const argv = require("yargs").options({
     "c": {
-        alias:   "color",
+        alias: "color",
         default: "448AFF",
-        type:    "string",
+        type: "string",
     },
     "i": {
-        alias:   "icon",
+        alias: "icon",
         default: `${__dirname}/assets/default-icon.png`,
-        type:    "string",
+        type: "string",
     },
     "o": {
-        alias:   "output",
+        alias: "output",
         default: "media",
-        type:    "string",
+        type: "string",
     },
 }).argv;
 
-const bg_color  = Jimp.cssColorToHex(`#${argv.color}`);
+const bg_color = Jimp.cssColorToHex(`#${argv.color}`);
 const icon_path = argv.icon;
 
 const output_sizes = require("./output-sizes");
 
 // Generate images
-Object.keys(output_sizes).forEach((name_prefix) => {
-    Object.keys(output_sizes[name_prefix]).forEach((platform) => {
-        output_sizes[name_prefix][platform].forEach((settings) => {
+for (const name_prefix in output_sizes) {
+    const currentNamePrefix = output_sizes[name_prefix];
+
+    for (const platform in currentNamePrefix) {
+        const currentPlatform = currentNamePrefix[platform];
+
+        currentPlatform.forEach((settings) => {
             // set the default background in an array
             const backgrounds = [new Jimp(settings.dimensions[0], settings.dimensions[1], bg_color)];
 
@@ -83,11 +87,17 @@ Object.keys(output_sizes).forEach((name_prefix) => {
                             resolve(background);
                         }
                     }).then((background) => {
+                        const finalIconLocation = `${argv.output}/${platform}/`;
+                        const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
+
+                        const finalIconFile = `${finalIconLocation}${name_prefix}-${finalIconSize}.png`;
+
                         // write the image
-                        background.composite(icon, icon_position[0], icon_position[1]).write(`${argv.output}/${platform}/${name_prefix}-${background.bitmap.width}x${background.bitmap.height}.png`);
+                        background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
                     });
                 });
             });
         });
-    });
-});
+
+    }
+}
