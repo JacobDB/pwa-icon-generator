@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 
+const path = require("path");
+const fs = require("fs");
+
 const Jimp = require("jimp");
 const yargs = require("yargs");
-const path = require("path");
+const svgToPng = require("svg-to-png");
+
+const outputSizes = require("./output-sizes");
 
 const options = {
     "c": {
@@ -30,90 +35,105 @@ for (const i in options) {
 }
 console.log('\n');
 
-// resolve paths
-argv.icon = argv.i = path.resolve(argv.icon);
-argv.output = argv.o = path.resolve(argv.output);
+const bgColor = Jimp.cssColorToHex(`#${argv.color}`);
+new Promise(async (resolve) => {
+    // verify if icon are svg
+    if (path.extname(argv.icon) === '.svg') {
+        // get path of icon
+        const iconFolder = path.dirname(argv.icon);
+        const iconName = path.basename(argv.icon, '.svg');
 
+        // get fullpath of temp file
+        const tempIcon = `${iconName}.png`;
 
-const bg_color = Jimp.cssColorToHex(`#${argv.color}`);
-const icon_path = argv.icon;
+        // create temp png of svg
+        await svgToPng.convert(path.resolve(argv.icon), iconFolder, {
+            defaultHeight: 8000,
+            defaultWidth: 8000,
+        });
 
-const output_sizes = require("./output-sizes");
+        resolve(path.resolve(path.join(iconFolder, tempIcon)));
+    } else {
+        resolve(path.resolve(argv.icon));
+    }
+}).then((iconPath) => {
+    // Generate images
+    for (const namePrefix in outputSizes) {
+        const currentNamePrefix = outputSizes[namePrefix];
 
-// Generate images
-for (const name_prefix in output_sizes) {
-    const currentNamePrefix = output_sizes[name_prefix];
+        for (const platform in currentNamePrefix) {
+            const currentPlatform = currentNamePrefix[platform];
 
-    for (const platform in currentNamePrefix) {
-        const currentPlatform = currentNamePrefix[platform];
+            currentPlatform.forEach((settings) => {
+                // set the default background in an array
+                const backgrounds = [new Jimp(settings.dimensions[0], settings.dimensions[1], bgColor)];
 
-        currentPlatform.forEach((settings) => {
-            // set the default background in an array
-            const backgrounds = [new Jimp(settings.dimensions[0], settings.dimensions[1], bg_color)];
+                // determine the icon size based on the x dimension divided by the scaling factor
+                const icon_size = Math.ceil(settings.dimensions[0] / settings.scale_factor);
 
-            // determine the icon size based on the x dimension divided by the scaling factor
-            const icon_size = Math.ceil(settings.dimensions[0] / settings.scale_factor);
+                // if dimension aren't equal, add a rotated background to the array
+                if (settings.dimensions[0] !== settings.dimensions[1]) {
+                    backgrounds.push(new Jimp(settings.dimensions[1], settings.dimensions[0], bgColor));
+                }
 
-            // if dimension aren't equal, add a rotated background to the array
-            if (settings.dimensions[0] !== settings.dimensions[1]) {
-                backgrounds.push(new Jimp(settings.dimensions[1], settings.dimensions[0], bg_color));
-            }
+                Jimp.read(iconPath).then((icon) => {
+                    icon.cover(icon_size, icon_size);
 
-            Jimp.read(icon_path).then((icon) => {
-                icon.cover(icon_size, icon_size);
+                    backgrounds.forEach((background) => {
+                        // determine where to position the icon for it to appear centered
+                        const icon_position = [Math.ceil((background.bitmap.width / 2) - icon_size / 2), Math.ceil((background.bitmap.height / 2) - icon_size / 2)];
 
-                backgrounds.forEach((background) => {
-                    // determine where to position the icon for it to appear centered
-                    const icon_position = [Math.ceil((background.bitmap.width / 2) - icon_size / 2), Math.ceil((background.bitmap.height / 2) - icon_size / 2)];
-
-                    // set the background to transparent if opaque is false
-                    if (settings.mode === "transparent") {
-                        background.opacity(0);
-                    }
-
-                    // check if the image needs to be masked
-                    new Promise((resolve) => {
-                        // adjust the background if mode is circle
-                        if (settings.mode === "circle") {
-                            // read the circle mask
-                            Jimp.read(`${__dirname}/assets/circle-mask.png`).then((mask) => {
-                                // resize the circle mask to match the background
-                                mask.resize(background.bitmap.width, background.bitmap.height);
-
-                                // apply the circle mask the background
-                                background.mask(mask, 0, 0);
-
-                                // emboss
-                                background.convolute([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]]);
-
-                                // read the shadow
-                                Jimp.read(`${__dirname}/assets/circle-shadow.png`).then((shadow) => {
-                                    // resize the shadow to match the background
-                                    shadow.resize(background.bitmap.width, background.bitmap.height);
-
-                                    // layer the shadow below the background
-                                    shadow.composite(background, 0, 0);
-
-                                    // return the background for final write
-                                    resolve(shadow);
-                                });
-                            });
-                        } else {
-                            // immediately resolve with the existing background if mode is not circle
-                            resolve(background);
+                        // set the background to transparent if opaque is false
+                        if (settings.mode === "transparent") {
+                            background.opacity(0);
                         }
-                    }).then((background) => {
-                        const finalIconLocation = `${argv.output}/${platform}/`;
-                        const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
 
-                        const finalIconFile = `${finalIconLocation}${name_prefix}-${finalIconSize}.png`;
+                        // check if the image needs to be masked
+                        new Promise((resolve) => {
+                            // adjust the background if mode is circle
+                            if (settings.mode === "circle") {
+                                // read the circle mask
+                                Jimp.read(`${__dirname}/assets/circle-mask.png`).then((mask) => {
+                                    // resize the circle mask to match the background
+                                    mask.resize(background.bitmap.width, background.bitmap.height);
 
-                        // write the image
-                        background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
+                                    // apply the circle mask the background
+                                    background.mask(mask, 0, 0);
+
+                                    // emboss
+                                    background.convolute([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]]);
+
+                                    // read the shadow
+                                    Jimp.read(`${__dirname}/assets/circle-shadow.png`).then((shadow) => {
+                                        // resize the shadow to match the background
+                                        shadow.resize(background.bitmap.width, background.bitmap.height);
+
+                                        // layer the shadow below the background
+                                        shadow.composite(background, 0, 0);
+
+                                        // return the background for final write
+                                        resolve(shadow);
+                                    });
+                                });
+                            } else {
+                                // immediately resolve with the existing background if mode is not circle
+                                resolve(background);
+                            }
+                        }).then((background) => {
+                            const finalIconLocation = `${argv.output}/${platform}/`;
+                            const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
+
+                            const finalIconFile = `${finalIconLocation}${namePrefix}-${finalIconSize}.png`;
+
+                            // write the image
+                            background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
+                        });
                     });
                 });
             });
-        });
 
+
+
+        }
     }
-}
+});
