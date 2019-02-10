@@ -69,9 +69,14 @@ new Promise(async (resolve) => {
     }
 }).then((params, bySVG) => {
     // create a new progress bar instance and use shades_classic theme
-    const progress = new _cliProgress.Bar({}, _cliProgress.Presets.shades_classic);
+    const progress = new _cliProgress.Bar({
+        format: 'Progress [{bar}] {percentage}% ({value}/{total}) | ETA: {eta}s | Status: {status}'
+    });
+    
     // start the progress bar with a total value of 'totalSizesLenght' and start value of 0
-    progress.start(totalSizesLenght, 0);
+    progress.start(totalSizesLenght, 0, {
+        status: 'Starting...'
+    });
     let currentProgress = 0;
 
 
@@ -94,10 +99,22 @@ new Promise(async (resolve) => {
                     backgrounds.push(new Jimp(settings.dimensions[1], settings.dimensions[0], bgColor));
                 }
 
+                const finalIconLocation = `${argv.output}/${platform}/`;
+                progress.update(currentProgress, {
+                    status: `${finalIconLocation}...`
+                });
+
                 Jimp.read(params.iconPath).then((icon) => {
                     icon.cover(icon_size, icon_size);
 
                     backgrounds.forEach((background) => {
+                        const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
+                        const finalIconFile = `${finalIconLocation}${namePrefix}-${finalIconSize}.png`;
+
+
+                        progress.update(currentProgress, {
+                            status: `${finalIconFile}...`
+                        });
                         // determine where to position the icon for it to appear centered
                         const icon_position = [Math.ceil((background.bitmap.width / 2) - icon_size / 2), Math.ceil((background.bitmap.height / 2) - icon_size / 2)];
 
@@ -138,20 +155,23 @@ new Promise(async (resolve) => {
                                 resolve(background);
                             }
                         }).then((background) => {
-                            const finalIconLocation = `${argv.output}/${platform}/`;
-                            const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
 
-                            const finalIconFile = `${finalIconLocation}${namePrefix}-${finalIconSize}.png`;
 
                             // write the image
                             background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
 
                             // update the current value
                             currentProgress += 1;
-                            progress.update(currentProgress);
+                            progress.update(currentProgress, {
+                                status: `${finalIconFile} OK!`
+                            });
 
                             // verify if is the last item
                             if (currentProgress === totalSizesLenght) {
+                                progress.update(currentProgress, {
+                                    status: `Finished!`
+                                });
+            
                                 // delete temp png of svg
                                 if (params.bySVG) {
                                     fs.unlinkSync(params.iconPath);
