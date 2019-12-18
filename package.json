@@ -1,6 +1,6 @@
 {
   "name": "pwa-icon-generator",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "description": "Generates home screen icons and splash screens.",
   "main": "index.js",
   "bin": {
