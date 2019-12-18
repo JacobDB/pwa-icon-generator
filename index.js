@@ -120,10 +120,10 @@ new Promise(async (resolve) => {
                         const finalIconSize = `${background.bitmap.width}x${background.bitmap.height}`;
                         const finalIconFile = `${finalIconLocation}${namePrefix}-${finalIconSize}.png`;
 
-
                         progress.update(currentProgress, {
                             status: `${finalIconFile}...`
                         });
+
                         // determine where to position the icon for it to appear centered
                         const icon_position = [Math.ceil((background.bitmap.width / 2) - icon_size / 2), Math.ceil((background.bitmap.height / 2) - icon_size / 2)];
 

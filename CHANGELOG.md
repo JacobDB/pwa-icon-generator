@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update packages
 
+### Fixed
+- Change `lenght` to `length` in all files
+
 ## [1.1.1] - 2019-12-18
 ### Fixed
 - Add documentation for adaptive icons

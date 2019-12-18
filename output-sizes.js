@@ -211,12 +211,10 @@ const sizes = {
     },
 };
 
-
 let totalLength = 0;
 for (const x in sizes)
     for (const y in sizes[x])
         totalLength += sizes[x][y].length
 
-
 module.exports.outputSizes = sizes;
-module.exports.totalSizesLenght = totalLength;
+module.exports.totalSizesLength = totalLength;
