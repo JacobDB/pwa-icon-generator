@@ -8,10 +8,14 @@ const yargs = require("yargs");
 const svgToPng = require("svg-to-png");
 const _cliProgress = require('cli-progress');
 
-const { outputSizes, totalSizesLenght } = require("./output-sizes");
-
+const { outputSizes, totalSizesLength } = require("./output-sizes");
 
 const options = {
+    "a": {
+        alias: "adaptive",
+        default: false,
+        type: "boolean",
+    },
     "c": {
         alias: "color",
         default: "448AFF",
@@ -57,7 +61,7 @@ new Promise(async (resolve) => {
         });
 
         resolve({
-            iconPath: path.resolve(path.join(iconFolder, tempIcon)), 
+            iconPath: path.resolve(path.join(iconFolder, tempIcon)),
             bySVG: true
         });
     } else {
@@ -72,13 +76,12 @@ new Promise(async (resolve) => {
     const progress = new _cliProgress.Bar({
         format: 'Progress [{bar}] {percentage}% ({value}/{total}) | ETA: {eta}s | Status: {status}'
     });
-    
-    // start the progress bar with a total value of 'totalSizesLenght' and start value of 0
-    progress.start(totalSizesLenght, 0, {
+
+    // start the progress bar with a total value of 'totalSizesLength' and start value of 0
+    progress.start(totalSizesLength, 0, {
         status: 'Starting...'
     });
     let currentProgress = 0;
-
 
     // Generate images
     for (const namePrefix in outputSizes) {
@@ -88,6 +91,12 @@ new Promise(async (resolve) => {
             const currentPlatform = currentNamePrefix[platform];
 
             currentPlatform.forEach((settings) => {
+                // disable mask and reduce icon size a bit to account for bleed on adaptive icons
+                if (argv.adaptive && namePrefix === "launcher-icon" && platform === "android") {
+                    settings.mode = "default";
+                    settings.scale_factor = settings.scale_factor * 1.15;
+                }
+
                 // set the default background in an array
                 const backgrounds = [new Jimp(settings.dimensions[0], settings.dimensions[1], bgColor)];
 
@@ -155,8 +164,6 @@ new Promise(async (resolve) => {
                                 resolve(background);
                             }
                         }).then((background) => {
-
-
                             // write the image
                             background.composite(icon, icon_position[0], icon_position[1]).write(finalIconFile);
 
@@ -167,11 +174,11 @@ new Promise(async (resolve) => {
                             });
 
                             // verify if is the last item
-                            if (currentProgress === totalSizesLenght) {
+                            if (currentProgress === totalSizesLength) {
                                 progress.update(currentProgress, {
                                     status: `Finished!`
                                 });
-            
+
                                 // delete temp png of svg
                                 if (params.bySVG) {
                                     fs.unlinkSync(params.iconPath);
@@ -184,8 +191,6 @@ new Promise(async (resolve) => {
                     });
                 });
             });
-
-
 
         }
     }
