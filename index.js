@@ -11,11 +11,6 @@ const _cliProgress = require('cli-progress');
 const { outputSizes, totalSizesLength } = require("./output-sizes");
 
 const options = {
-    "a": {
-        alias: "adaptive",
-        default: false,
-        type: "boolean",
-    },
     "c": {
         alias: "color",
         default: "448AFF",
@@ -25,6 +20,11 @@ const options = {
         alias: "icon",
         default: "assets/default-icon.png",
         type: "string",
+    },
+    "m": {
+        alias: "maskable",
+        default: false,
+        type: "boolean",
     },
     "o": {
         alias: "output",
@@ -91,8 +91,8 @@ new Promise(async (resolve) => {
             const currentPlatform = currentNamePrefix[platform];
 
             currentPlatform.forEach((settings) => {
-                // disable mask and reduce icon size a bit to account for bleed on adaptive icons
-                if (argv.adaptive && namePrefix === "launcher-icon" && platform === "android") {
+                // disable mask and reduce icon size a bit to account for bleed on maskable icons
+                if (argv.maskable && namePrefix === "launcher-icon" && platform === "android") {
                     settings.mode = "default";
                     settings.scale_factor = settings.scale_factor * 1.15;
                 }
